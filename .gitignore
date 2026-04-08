@@ -1,0 +1,7 @@
+.claude/
+__pycache__/
+*.pyc
+.env
+mermaid-config.json
+architecture.mmd
+.venv/

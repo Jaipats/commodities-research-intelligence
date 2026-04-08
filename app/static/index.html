@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commodities Research Intelligence</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2235;
+            --bg-card-hover: #1f2a40;
+            --border: #2a3548;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.15);
+            --green: #10b981;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --purple: #8b5cf6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        .header {
+            padding: 24px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 32px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-badge {
+            padding: 6px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Input Section */
+        .input-section {
+            margin-bottom: 32px;
+        }
+
+        .input-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 15px;
+            line-height: 1.6;
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+        }
+
+        .input-hint {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .btn-primary {
+            padding: 12px 28px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 0;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .loading-steps {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .loading-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .loading-step.active {
+            color: var(--accent);
+        }
+
+        .loading-step.done {
+            color: var(--green);
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .loading-step.active .step-dot {
+            background: var(--accent);
+            animation: pulse 1s infinite;
+        }
+
+        .loading-step.done .step-dot {
+            background: var(--green);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Results */
+        .results-section {
+            margin-bottom: 48px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .tab:hover {
+            color: var(--text-secondary);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-count {
+            display: inline-block;
+            padding: 1px 7px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            font-size: 11px;
+            margin-left: 6px;
+        }
+
+        /* Research Paper */
+        .paper-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .paper-container h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .paper-container h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 12px;
+            color: var(--accent);
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .paper-container h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 24px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .paper-container p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        .paper-container strong {
+            color: var(--text-primary);
+        }
+
+        .paper-container ul, .paper-container ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .paper-container li {
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+        }
+
+        /* Articles Grid */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 16px;
+        }
+
+        .article-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .article-card:hover {
+            border-color: var(--accent);
+            background: var(--bg-card-hover);
+        }
+
+        .article-source {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .article-headline {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .meta-badge {
+            padding: 3px 10px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .article-body {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            max-height: 120px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .article-body::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(transparent, var(--bg-card));
+        }
+
+        .article-card:hover .article-body::after {
+            background: linear-gradient(transparent, var(--bg-card-hover));
+        }
+
+        .similarity-bar {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .similarity-track {
+            flex: 1;
+            height: 4px;
+            background: var(--bg-secondary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .similarity-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .similarity-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* Supply Chain Table */
+        .sc-table-container {
+            overflow-x: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        .impact-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .impact-critical { background: rgba(239,68,68,0.15); color: var(--red); }
+        .impact-high { background: rgba(245,158,11,0.15); color: var(--orange); }
+        .impact-medium { background: rgba(59,130,246,0.15); color: var(--accent); }
+        .impact-low { background: rgba(16,185,129,0.15); color: var(--green); }
+
+        .price-positive { color: var(--green); }
+        .price-negative { color: var(--red); }
+
+        /* Price Cards */
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .price-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .price-commodity {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .price-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .price-change {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Error */
+        .error-box {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            color: var(--red);
+            text-align: center;
+        }
+
+        /* Metadata bar */
+        .metadata-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .metadata-item {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .metadata-item strong {
+            color: var(--text-secondary);
+        }
+
+        /* Example queries */
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .example-chip {
+            padding: 6px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .example-chip:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Export PDF button */
+        .btn-export {
+            padding: 10px 20px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-export:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .btn-export:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-export svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .paper-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        /* PDF generation hidden container */
+        .pdf-source {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+        }
+
+        .pdf-source .pdf-content {
+            width: 700px;
+            padding: 48px;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            color: #1a1a1a;
+            background: #fff;
+            line-height: 1.7;
+            font-size: 13px;
+        }
+
+        .pdf-source .pdf-content .pdf-header {
+            border-bottom: 2px solid #1a365d;
+            padding-bottom: 20px;
+            margin-bottom: 28px;
+        }
+
+        .pdf-source .pdf-content .pdf-header h1 {
+            font-size: 22px;
+            color: #1a365d;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .pdf-source .pdf-content .pdf-header .pdf-meta {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .pdf-source .pdf-content h2 {
+            font-size: 16px;
+            color: #1a365d;
+            margin-top: 26px;
+            margin-bottom: 10px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .pdf-source .pdf-content h3 {
+            font-size: 14px;
+            color: #2d3748;
+            margin-top: 18px;
+            margin-bottom: 8px;
+        }
+
+        .pdf-source .pdf-content p {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .pdf-source .pdf-content ul, .pdf-source .pdf-content ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+
+        .pdf-source .pdf-content li {
+            margin-bottom: 4px;
+        }
+
+        .pdf-source .pdf-content strong {
+            color: #1a1a1a;
+        }
+
+        .pdf-source .pdf-content .pdf-footer {
+            margin-top: 36px;
+            padding-top: 16px;
+            border-top: 1px solid #ddd;
+            font-size: 10px;
+            color: #999;
+            text-align: center;
+        }
+
+        .pdf-source .pdf-content .pdf-sc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 11px;
+        }
+
+        .pdf-source .pdf-content .pdf-sc-table th {
+            background: #f0f4f8;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-bottom: 2px solid #ddd;
+            color: #333;
+        }
+
+        .pdf-source .pdf-content .pdf-sc-table td {
+            padding: 5px 8px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+
+        .pdf-source .pdf-content .pdf-price-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .pdf-source .pdf-content .pdf-price-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .pdf-source .pdf-content .pdf-price-card .commod {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .pdf-source .pdf-content .pdf-price-card .price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .pdf-source .pdf-content .pdf-price-card .change-pos { color: #16a34a; font-size: 11px; font-weight: 600; }
+        .pdf-source .pdf-content .pdf-price-card .change-neg { color: #dc2626; font-size: 11px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        const EXAMPLE_QUERIES = [
+            "Iran announces closure of Strait of Hormuz after failed negotiations",
+            "Major earthquake in Chile disrupts copper mining operations",
+            "OPEC+ announces surprise production cut of 2 million barrels per day",
+            "European natural gas storage falls to critical levels ahead of winter",
+            "China imposes export restrictions on rare earth elements",
+            "Record wheat harvest in Russia pressures global grain prices"
+        ];
+
+        function App() {
+            const [query, setQuery] = useState("");
+            const [loading, setLoading] = useState(false);
+            const [loadingStep, setLoadingStep] = useState(0);
+            const [result, setResult] = useState(null);
+            const [error, setError] = useState(null);
+            const [activeTab, setActiveTab] = useState("paper");
+            const [exporting, setExporting] = useState(false);
+            const textareaRef = useRef(null);
+            const pdfRef = useRef(null);
+
+            const handleSubmit = async () => {
+                if (!query.trim() || loading) return;
+                setLoading(true);
+                setLoadingStep(0);
+                setError(null);
+                setResult(null);
+
+                const steps = [1, 2, 3, 4];
+                let stepIdx = 0;
+                const stepTimer = setInterval(() => {
+                    stepIdx = Math.min(stepIdx + 1, steps.length - 1);
+                    setLoadingStep(steps[stepIdx]);
+                }, 3000);
+
+                try {
+                    const response = await fetch("/api/research", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            breaking_news: query.trim(),
+                            num_articles: 10
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.detail || "Research generation failed");
+                    }
+
+                    const data = await response.json();
+                    setResult(data);
+                    setActiveTab("paper");
+                } catch (e) {
+                    setError(e.message);
+                } finally {
+                    clearInterval(stepTimer);
+                    setLoading(false);
+                }
+            };
+
+            const handleKeyDown = (e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    handleSubmit();
+                }
+            };
+
+            const handleExample = (text) => {
+                setQuery(text);
+                if (textareaRef.current) textareaRef.current.focus();
+            };
+
+            const formatMarkdown = (text) => {
+                if (!text) return "";
+                let html = text
+                    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+                    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/^\- (.+)$/gm, '<li>$1</li>')
+                    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br/>');
+                return `<p>${html}</p>`;
+            };
+
+            const getPricesByCommod = () => {
+                if (!result || !result.price_data) return {};
+                const grouped = {};
+                result.price_data.forEach(p => {
+                    if (!grouped[p.commodity]) grouped[p.commodity] = [];
+                    grouped[p.commodity].push(p);
+                });
+                Object.keys(grouped).forEach(k => {
+                    grouped[k].sort((a, b) => a.trade_date.localeCompare(b.trade_date));
+                });
+                return grouped;
+            };
+
+            const handleExportPDF = async () => {
+                if (!result || exporting) return;
+                setExporting(true);
+                try {
+                    const el = pdfRef.current;
+                    if (!el) return;
+
+                    const opt = {
+                        margin: [10, 12, 10, 12],
+                        filename: `commodities-research-${new Date().toISOString().slice(0,10)}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                    };
+                    await html2pdf().set(opt).from(el).save();
+                } catch (e) {
+                    console.error('PDF export failed:', e);
+                } finally {
+                    setExporting(false);
+                }
+            };
+
+            const buildPdfPriceCards = () => {
+                const grouped = getPricesByCommod();
+                return Object.entries(grouped).map(([commodity, prices]) => {
+                    const latest = prices[prices.length - 1];
+                    const first = prices[0];
+                    const change = first.close_price
+                        ? ((latest.close_price - first.close_price) / first.close_price * 100)
+                        : 0;
+                    return { commodity, price: latest.close_price, change };
+                });
+            };
+
+            return (
+                <div className="app-container">
+                    <header className="header">
+                        <div className="header-content">
+                            <div className="logo-area">
+                                <div className="logo-icon">CR</div>
+                                <div className="logo-text">
+                                    <h1>Commodities Research Intelligence</h1>
+                                    <span>AI-Powered Market Analysis</span>
+                                </div>
+                            </div>
+                            <div className="header-badge">Powered by Databricks</div>
+                        </div>
+                    </header>
+
+                    <section className="input-section">
+                        <div className="input-card">
+                            <label className="input-label">Breaking News Input</label>
+                            <div className="input-wrapper">
+                                <textarea
+                                    ref={textareaRef}
+                                    value={query}
+                                    onChange={e => setQuery(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Enter breaking news or a market event to analyze its impact on commodity markets, supply chains, and prices..."
+                                />
+                            </div>
+                            <div className="input-actions">
+                                <span className="input-hint">Press Cmd+Enter to submit</span>
+                                <button
+                                    className="btn-primary"
+                                    onClick={handleSubmit}
+                                    disabled={!query.trim() || loading}
+                                >
+                                    {loading ? "Analyzing..." : "Generate Research"}
+                                    {!loading && <span>&#8594;</span>}
+                                </button>
+                            </div>
+                            <div className="examples">
+                                {EXAMPLE_QUERIES.map((q, i) => (
+                                    <button key={i} className="example-chip" onClick={() => handleExample(q)}>
+                                        {q.length > 60 ? q.slice(0, 60) + "..." : q}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {loading && (
+                        <div className="loading-overlay">
+                            <div className="spinner" />
+                            <div className="loading-text">Generating commodities research report...</div>
+                            <div className="loading-steps">
+                                <div className={`loading-step ${loadingStep >= 0 ? 'active' : ''} ${loadingStep > 0 ? 'done' : ''}`}>
+                                    <div className="step-dot" /> Searching related news articles via vector search
+                                </div>
+                                <div className={`loading-step ${loadingStep >= 1 ? 'active' : ''} ${loadingStep > 1 ? 'done' : ''}`}>
+                                    <div className="step-dot" /> Retrieving supply chain impact data
+                                </div>
+                                <div className={`loading-step ${loadingStep >= 2 ? 'active' : ''} ${loadingStep > 2 ? 'done' : ''}`}>
+                                    <div className="step-dot" /> Analyzing commodity price movements
+                                </div>
+                                <div className={`loading-step ${loadingStep >= 3 ? 'active' : ''} ${loadingStep > 3 ? 'done' : ''}`}>
+                                    <div className="step-dot" /> Generating research paper with AI
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="error-box">
+                            <strong>Error:</strong> {error}
+                        </div>
+                    )}
+
+                    {result && (
+                        <section className="results-section">
+                            <div className="metadata-bar">
+                                <div className="metadata-item">
+                                    <strong>{result.metadata.num_articles_found}</strong> articles found
+                                </div>
+                                <div className="metadata-item">
+                                    <strong>{result.metadata.num_supply_chain_records}</strong> supply chain records
+                                </div>
+                                <div className="metadata-item">
+                                    <strong>{result.metadata.commodities_analyzed?.length || 0}</strong> commodities analyzed
+                                </div>
+                                <div className="metadata-item">
+                                    Generated: <strong>{new Date(result.metadata.generated_at).toLocaleString()}</strong>
+                                </div>
+                            </div>
+
+                            <div className="tabs" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
+                                <div style={{display:'flex',gap:'4px'}}>
+                                <button className={`tab ${activeTab === 'paper' ? 'active' : ''}`} onClick={() => setActiveTab('paper')}>
+                                    Research Paper
+                                </button>
+                                <button className={`tab ${activeTab === 'articles' ? 'active' : ''}`} onClick={() => setActiveTab('articles')}>
+                                    Source Articles
+                                    <span className="tab-count">{result.related_articles?.length || 0}</span>
+                                </button>
+                                <button className={`tab ${activeTab === 'supply' ? 'active' : ''}`} onClick={() => setActiveTab('supply')}>
+                                    Supply Chain
+                                    <span className="tab-count">{result.supply_chain_impacts?.length || 0}</span>
+                                </button>
+                                <button className={`tab ${activeTab === 'prices' ? 'active' : ''}`} onClick={() => setActiveTab('prices')}>
+                                    Price Data
+                                    <span className="tab-count">{Object.keys(getPricesByCommod()).length}</span>
+                                </button>
+                                </div>
+                                <button className="btn-export" onClick={handleExportPDF} disabled={exporting}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="7 10 12 15 17 10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                    {exporting ? "Generating PDF..." : "Export PDF"}
+                                </button>
+                            </div>
+
+                            {activeTab === 'paper' && (
+                                <div className="paper-container"
+                                     dangerouslySetInnerHTML={{ __html: formatMarkdown(result.research_paper) }}
+                                />
+                            )}
+
+                            {activeTab === 'articles' && (
+                                <div className="articles-grid">
+                                    {result.related_articles?.map((a, i) => (
+                                        <div key={i} className="article-card">
+                                            <div className="article-source">{a.source}</div>
+                                            <div className="article-headline">{a.headline}</div>
+                                            <div className="article-meta">
+                                                <span className="meta-badge">{a.primary_commodity}</span>
+                                                <span className="meta-badge">{a.region}</span>
+                                                <span className="meta-badge">{a.sector}</span>
+                                            </div>
+                                            <div className="article-body">{a.body}</div>
+                                            <div className="similarity-bar">
+                                                <div className="similarity-track">
+                                                    <div className="similarity-fill" style={{width: `${Math.min(a.similarity_score * 100, 100)}%`}} />
+                                                </div>
+                                                <span className="similarity-label">
+                                                    {(a.similarity_score * 100).toFixed(1)}% match
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {activeTab === 'supply' && (
+                                <div className="sc-table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Commodity</th>
+                                                <th>Disruption</th>
+                                                <th>Impact</th>
+                                                <th>Route</th>
+                                                <th>Price Change</th>
+                                                <th>Vol. Disrupted</th>
+                                                <th>Mitigation</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {result.supply_chain_impacts?.map((s, i) => (
+                                                <tr key={i}>
+                                                    <td><strong>{s.commodity}</strong></td>
+                                                    <td>{s.disruption_type}</td>
+                                                    <td>
+                                                        <span className={`impact-badge impact-${s.impact_level.toLowerCase()}`}>
+                                                            {s.impact_level}
+                                                        </span>
+                                                    </td>
+                                                    <td>{s.affected_route}</td>
+                                                    <td className={s.price_change_pct >= 0 ? 'price-positive' : 'price-negative'}>
+                                                        {s.price_change_pct >= 0 ? '+' : ''}{s.price_change_pct.toFixed(1)}%
+                                                    </td>
+                                                    <td>{s.volume_disrupted_pct.toFixed(1)}%</td>
+                                                    <td style={{maxWidth:'200px',fontSize:'12px'}}>{s.mitigation_strategy}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {activeTab === 'prices' && (() => {
+                                const grouped = getPricesByCommod();
+                                return (
+                                    <div className="price-grid">
+                                        {Object.entries(grouped).map(([commodity, prices]) => {
+                                            const latest = prices[prices.length - 1];
+                                            const first = prices[0];
+                                            const change = first.close_price
+                                                ? ((latest.close_price - first.close_price) / first.close_price * 100)
+                                                : 0;
+                                            return (
+                                                <div key={commodity} className="price-card">
+                                                    <div className="price-commodity">{commodity}</div>
+                                                    <div className="price-value">${latest.close_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                                    <div className={`price-change ${change >= 0 ? 'price-positive' : 'price-negative'}`}>
+                                                        {change >= 0 ? '+' : ''}{change.toFixed(2)}% (10d)
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })()}
+                        </section>
+                    )}
+
+                    {result && (
+                        <div className="pdf-source">
+                            <div className="pdf-content" ref={pdfRef}>
+                                <div className="pdf-header">
+                                    <h1>Commodities Research Intelligence Report</h1>
+                                    <div className="pdf-meta">
+                                        Generated: {new Date(result.metadata.generated_at).toLocaleString()} |
+                                        Articles Analyzed: {result.metadata.num_articles_found} |
+                                        Commodities: {result.metadata.commodities_analyzed?.join(', ')}
+                                    </div>
+                                    <div className="pdf-meta" style={{marginTop:'4px'}}>
+                                        Query: <em>{result.metadata.query}</em>
+                                    </div>
+                                </div>
+
+                                <div dangerouslySetInnerHTML={{ __html: formatMarkdown(result.research_paper) }} />
+
+                                {result.supply_chain_impacts?.length > 0 && (
+                                    <div>
+                                        <h2>Appendix A: Supply Chain Impact Data</h2>
+                                        <table className="pdf-sc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Commodity</th>
+                                                    <th>Disruption</th>
+                                                    <th>Impact</th>
+                                                    <th>Route</th>
+                                                    <th>Price Chg</th>
+                                                    <th>Vol. Disrupted</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {result.supply_chain_impacts.slice(0, 15).map((s, i) => (
+                                                    <tr key={i}>
+                                                        <td><strong>{s.commodity}</strong></td>
+                                                        <td>{s.disruption_type}</td>
+                                                        <td>{s.impact_level}</td>
+                                                        <td>{s.affected_route}</td>
+                                                        <td style={{color: s.price_change_pct >= 0 ? '#16a34a' : '#dc2626'}}>
+                                                            {s.price_change_pct >= 0 ? '+' : ''}{s.price_change_pct.toFixed(1)}%
+                                                        </td>
+                                                        <td>{s.volume_disrupted_pct.toFixed(1)}%</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {(() => {
+                                    const priceCards = buildPdfPriceCards();
+                                    return priceCards.length > 0 ? (
+                                        <div>
+                                            <h2>Appendix B: Commodity Price Summary</h2>
+                                            <div className="pdf-price-grid">
+                                                {priceCards.map(({commodity, price, change}) => (
+                                                    <div key={commodity} className="pdf-price-card">
+                                                        <div className="commod">{commodity}</div>
+                                                        <div className="price">${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                                        <div className={change >= 0 ? 'change-pos' : 'change-neg'}>
+                                                            {change >= 0 ? '+' : ''}{change.toFixed(2)}%
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : null;
+                                })()}
+
+                                <div className="pdf-footer">
+                                    Commodities Research Intelligence | Powered by Databricks | {new Date().toLocaleDateString()} | For Institutional Use Only
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
