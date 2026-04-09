@@ -14,6 +14,10 @@ This application combines **Databricks Vector Search**, **Unity Catalog**, and *
 4. Claude Sonnet generates a comprehensive research paper with quantitative analysis
 5. Results are presented across 4 interactive tabs with PDF export capability
 
+**Two access modes:**
+- **Interactive** — Databricks App with React UI for ad-hoc research
+- **Programmatic** — Model Serving endpoint (`commodities-research-api`) for automation via REST API
+
 ## Architecture
 
 ### Data Pipeline (One-Time Setup)
@@ -39,34 +43,12 @@ Three Databricks notebooks run sequentially on serverless compute to build the d
 
 ### Application Runtime Flow
 
-```
-User Input (Breaking News)
-        |
-        v
-  React Frontend  ──POST /api/research──>  FastAPI Backend
-                                                |
-                    ┌───────────────────────────┼───────────────────────────┐
-                    v                           v                           v
-            Vector Search               SQL Warehouse               SQL Warehouse
-         (query_index API)          (supply_chain_impacts)       (commodity_prices)
-         top 10 articles             linked to matched            for relevant
-         by similarity               article IDs                  commodities
-                    |                           |                           |
-                    └───────────────────────────┼───────────────────────────┘
-                                                |
-                                                v
-                                   Foundation Model API
-                                  (databricks-claude-sonnet-4)
-                                    generates research paper
-                                                |
-                                                v
-                                   JSON Response returned
-                                   (paper + articles + supply chain + prices)
-                                                |
-                                                v
-                                        React Frontend
-                                   renders 4 tabs + PDF export
-```
+Both the Databricks App and the Serving Endpoint share the same pipeline:
+
+1. **Vector Search** — Semantically find the top 10 related articles using `databricks-gte-large-en` embeddings
+2. **SQL Queries** — Retrieve supply chain impact data and commodity price history from Delta tables via Serverless SQL
+3. **LLM Generation** — Send all context to `databricks-claude-sonnet-4` to produce a structured research paper
+4. **Response** — Return the research paper, source articles, supply chain impacts, and price data
 
 ### Infrastructure
 
@@ -80,17 +62,19 @@ User Input (Breaking News)
 | **Embeddings** | `databricks-gte-large-en` |
 | **SQL Warehouse** | Serverless Starter Warehouse |
 | **App Compute** | Databricks Apps (Medium) |
+| **Serving Endpoint** | `commodities-research-api` (MLflow pyfunc, scale-to-zero) |
 
 ## Project Structure
 
 ```
 ResearchNews/
 ├── README.md
-├── architecture.png              # Mermaid architecture diagram
+├── architecture.png                      # Architecture diagram
 ├── notebooks/
 │   ├── 01_generate_news_data.py          # News article generation
 │   ├── 02_generate_supply_chain_data.py  # Supply chain + price data
-│   └── 03_setup_vector_search.py         # Vector search setup
+│   ├── 03_setup_vector_search.py         # Vector search setup
+│   └── 04_deploy_serving_endpoint.py     # MLflow model + serving endpoint
 └── app/
     ├── app.yaml                  # Databricks App configuration
     ├── requirements.txt          # Python dependencies
@@ -151,6 +135,64 @@ ResearchNews/
 - **Interactive UI** — 4 tabs for research paper, source articles, supply chain data, and price cards
 - **PDF export** — Download the full report as a professionally formatted PDF with appendices
 
+## API Usage (Serving Endpoint)
+
+The `commodities-research-api` serving endpoint exposes the same research pipeline as the app for programmatic access.
+
+### Python SDK
+```python
+from databricks.sdk import WorkspaceClient
+import json
+
+w = WorkspaceClient()
+response = w.serving_endpoints.query(
+    name="commodities-research-api",
+    dataframe_split={
+        "columns": ["breaking_news"],
+        "data": [["OPEC+ announces surprise production cut of 2 million barrels per day"]]
+    }
+)
+result = json.loads(response.predictions[0])
+print(result["research_paper"])
+```
+
+### curl
+```bash
+curl -X POST "https://<workspace>/serving-endpoints/commodities-research-api/invocations" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"dataframe_split": {"columns": ["breaking_news"], "data": [["Iran closes Strait of Hormuz"]]}}'
+```
+
+### Batch (multiple queries)
+```python
+response = w.serving_endpoints.query(
+    name="commodities-research-api",
+    dataframe_split={
+        "columns": ["breaking_news"],
+        "data": [
+            ["Iran closes Strait of Hormuz"],
+            ["Major copper mine collapse in Chile"],
+            ["China bans rare earth exports"]
+        ]
+    }
+)
+for pred in response.predictions:
+    result = json.loads(pred)
+    print(result["metadata"]["query"], "->", result["metadata"]["num_articles_found"], "articles")
+```
+
+### Response Schema
+```json
+{
+  "research_paper": "# Commodities Research Report: ...",
+  "related_articles": [{"headline": "...", "source": "Bloomberg", ...}],
+  "supply_chain_impacts": [{"commodity": "Crude Oil", "impact_level": "Critical", ...}],
+  "price_data": [{"commodity": "Crude Oil", "close_price": 95.42, ...}],
+  "metadata": {"query": "...", "num_articles_found": 10, "commodities_analyzed": [...]}
+}
+```
+
 ## Deployment
 
 ### Prerequisites
@@ -188,6 +230,8 @@ ResearchNews/
      --profile=<profile>
    ```
 
+6. **(Optional) Deploy serving endpoint** — Run notebook `04_deploy_serving_endpoint.py` to register the MLflow model and create the `commodities-research-api` endpoint for programmatic access.
+
 ## Technology Stack
 
 | Layer | Technology |
@@ -197,5 +241,6 @@ ResearchNews/
 | AI/ML | Claude Sonnet 4 (LLM), GTE-Large-EN (Embeddings) |
 | Search | Databricks Vector Search (Delta Sync) |
 | Data | Delta Lake, Unity Catalog |
+| Model Serving | MLflow pyfunc, Databricks Model Serving (scale-to-zero) |
 | Compute | Databricks Apps, Serverless SQL, Serverless Jobs |
 | Infrastructure | Databricks FEVM (AWS) |
