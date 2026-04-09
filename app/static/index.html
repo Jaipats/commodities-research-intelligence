@@ -635,136 +635,212 @@
             margin-bottom: 16px;
         }
 
-        /* PDF generation hidden container */
-        .pdf-source {
+        /* PDF render container — all styles use !important to override inherited dark theme */
+        #pdf-render-root {
             position: absolute;
             left: -9999px;
             top: 0;
+            z-index: -1;
         }
 
-        .pdf-source .pdf-content {
-            width: 700px;
-            padding: 48px;
-            font-family: 'Georgia', 'Times New Roman', serif;
-            color: #1a1a1a;
-            background: #fff;
-            line-height: 1.7;
+        #pdf-render-root * {
+            color: #1a1a1a !important;
+            background: transparent !important;
+        }
+
+        #pdf-render-root .pdf-page {
+            width: 794px;
+            padding: 56px 52px;
+            font-family: 'Georgia', 'Times New Roman', serif !important;
+            background: #ffffff !important;
+            color: #1a1a1a !important;
+            line-height: 1.75;
+            font-size: 12.5px;
+        }
+
+        #pdf-render-root .pdf-banner {
+            background: #1a365d !important;
+            color: #ffffff !important;
+            padding: 28px 32px;
+            margin: -56px -52px 32px -52px;
+        }
+
+        #pdf-render-root .pdf-banner h1 {
+            font-size: 24px;
+            color: #ffffff !important;
+            margin: 0 0 4px 0;
+            font-weight: 700;
+        }
+
+        #pdf-render-root .pdf-banner .pdf-subtitle {
             font-size: 13px;
+            color: #cbd5e1 !important;
+            margin: 0;
         }
 
-        .pdf-source .pdf-content .pdf-header {
+        #pdf-render-root .pdf-info-bar {
+            display: flex;
+            gap: 24px;
+            padding: 12px 0;
+            margin-bottom: 20px;
             border-bottom: 2px solid #1a365d;
-            padding-bottom: 20px;
-            margin-bottom: 28px;
+            font-size: 11px;
+            color: #555 !important;
         }
 
-        .pdf-source .pdf-content .pdf-header h1 {
+        #pdf-render-root .pdf-info-bar strong {
+            color: #1a365d !important;
+        }
+
+        #pdf-render-root h1 {
             font-size: 22px;
-            color: #1a365d;
-            margin-bottom: 6px;
+            color: #1a365d !important;
+            margin: 0 0 6px 0;
             line-height: 1.3;
         }
 
-        .pdf-source .pdf-content .pdf-header .pdf-meta {
-            font-size: 11px;
-            color: #666;
-        }
-
-        .pdf-source .pdf-content h2 {
+        #pdf-render-root h2 {
             font-size: 16px;
-            color: #1a365d;
-            margin-top: 26px;
-            margin-bottom: 10px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #ddd;
+            color: #1a365d !important;
+            margin: 28px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e2e8f0;
+            font-weight: 700;
+            page-break-after: avoid;
         }
 
-        .pdf-source .pdf-content h3 {
-            font-size: 14px;
-            color: #2d3748;
-            margin-top: 18px;
-            margin-bottom: 8px;
+        #pdf-render-root h3 {
+            font-size: 13.5px;
+            color: #2d3748 !important;
+            margin: 20px 0 8px 0;
+            font-weight: 700;
+            page-break-after: avoid;
         }
 
-        .pdf-source .pdf-content p {
-            margin-bottom: 12px;
+        #pdf-render-root p {
+            margin: 0 0 10px 0;
+            color: #1a1a1a !important;
             text-align: justify;
         }
 
-        .pdf-source .pdf-content ul, .pdf-source .pdf-content ol {
-            margin: 8px 0;
-            padding-left: 24px;
+        #pdf-render-root ul, #pdf-render-root ol {
+            margin: 6px 0 12px 0;
+            padding-left: 22px;
         }
 
-        .pdf-source .pdf-content li {
+        #pdf-render-root li {
             margin-bottom: 4px;
+            color: #1a1a1a !important;
         }
 
-        .pdf-source .pdf-content strong {
-            color: #1a1a1a;
+        #pdf-render-root strong {
+            color: #111 !important;
+            font-weight: 700;
         }
 
-        .pdf-source .pdf-content .pdf-footer {
-            margin-top: 36px;
-            padding-top: 16px;
-            border-top: 1px solid #ddd;
-            font-size: 10px;
-            color: #999;
-            text-align: center;
-        }
-
-        .pdf-source .pdf-content .pdf-sc-table {
+        #pdf-render-root .pdf-sc-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 12px 0;
+            margin: 16px 0;
             font-size: 11px;
+            font-family: -apple-system, sans-serif !important;
+            page-break-inside: auto;
         }
 
-        .pdf-source .pdf-content .pdf-sc-table th {
-            background: #f0f4f8;
-            padding: 6px 8px;
+        #pdf-render-root .pdf-sc-table thead {
+            background: #1a365d !important;
+        }
+
+        #pdf-render-root .pdf-sc-table th {
+            background: #1a365d !important;
+            color: #ffffff !important;
+            padding: 8px 10px;
             text-align: left;
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            border-bottom: 2px solid #ddd;
-            color: #333;
+            letter-spacing: 0.3px;
         }
 
-        .pdf-source .pdf-content .pdf-sc-table td {
-            padding: 5px 8px;
-            border-bottom: 1px solid #eee;
-            color: #333;
+        #pdf-render-root .pdf-sc-table td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #333 !important;
         }
 
-        .pdf-source .pdf-content .pdf-price-grid {
+        #pdf-render-root .pdf-sc-table tr:nth-child(even) td {
+            background: #f7fafc !important;
+        }
+
+        #pdf-render-root .pdf-sc-table .impact-critical { color: #dc2626 !important; font-weight: 700; }
+        #pdf-render-root .pdf-sc-table .impact-high { color: #d97706 !important; font-weight: 700; }
+        #pdf-render-root .pdf-sc-table .impact-medium { color: #2563eb !important; font-weight: 600; }
+        #pdf-render-root .pdf-sc-table .impact-low { color: #16a34a !important; font-weight: 600; }
+        #pdf-render-root .pdf-sc-table .price-up { color: #16a34a !important; font-weight: 600; }
+        #pdf-render-root .pdf-sc-table .price-down { color: #dc2626 !important; font-weight: 600; }
+
+        #pdf-render-root .pdf-price-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin: 12px 0;
+            gap: 12px;
+            margin: 16px 0;
         }
 
-        .pdf-source .pdf-content .pdf-price-card {
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 10px;
+        #pdf-render-root .pdf-price-card {
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 14px 12px;
             text-align: center;
+            background: #f8fafc !important;
+            page-break-inside: avoid;
         }
 
-        .pdf-source .pdf-content .pdf-price-card .commod {
+        #pdf-render-root .pdf-price-card .commod-name {
             font-size: 10px;
-            color: #666;
+            color: #64748b !important;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: -apple-system, sans-serif !important;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
 
-        .pdf-source .pdf-content .pdf-price-card .price {
-            font-size: 16px;
+        #pdf-render-root .pdf-price-card .commod-price {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1a1a1a !important;
+        }
+
+        #pdf-render-root .pdf-price-card .commod-change-pos {
+            color: #16a34a !important;
+            font-size: 12px;
             font-weight: 700;
-            color: #1a1a1a;
         }
 
-        .pdf-source .pdf-content .pdf-price-card .change-pos { color: #16a34a; font-size: 11px; font-weight: 600; }
-        .pdf-source .pdf-content .pdf-price-card .change-neg { color: #dc2626; font-size: 11px; font-weight: 600; }
+        #pdf-render-root .pdf-price-card .commod-change-neg {
+            color: #dc2626 !important;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        #pdf-render-root .pdf-footer {
+            margin-top: 40px;
+            padding-top: 16px;
+            border-top: 2px solid #1a365d;
+            font-size: 9.5px;
+            color: #94a3b8 !important;
+            text-align: center;
+            font-family: -apple-system, sans-serif !important;
+        }
+
+        #pdf-render-root .pdf-disclaimer {
+            margin-top: 12px;
+            font-size: 8.5px;
+            color: #94a3b8 !important;
+            text-align: center;
+            font-style: italic;
+            font-family: -apple-system, sans-serif !important;
+        }
     </style>
 </head>
 <body>
@@ -878,15 +954,37 @@
                     const el = pdfRef.current;
                     if (!el) return;
 
+                    // Briefly move into view for html2canvas to capture correctly
+                    const root = document.getElementById('pdf-render-root');
+                    root.style.position = 'fixed';
+                    root.style.left = '0';
+                    root.style.top = '0';
+                    root.style.zIndex = '-1';
+                    root.style.opacity = '0.01';
+
+                    await new Promise(r => setTimeout(r, 100));
+
                     const opt = {
-                        margin: [10, 12, 10, 12],
+                        margin: 0,
                         filename: `commodities-research-${new Date().toISOString().slice(0,10)}.pdf`,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true, logging: false },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                        image: { type: 'jpeg', quality: 0.95 },
+                        html2canvas: {
+                            scale: 2,
+                            useCORS: true,
+                            logging: false,
+                            backgroundColor: '#ffffff',
+                            width: 794
+                        },
+                        jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait', hotfixes: ['px_scaling'] },
+                        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.pdf-price-card', 'h2', 'h3'] }
                     };
                     await html2pdf().set(opt).from(el).save();
+
+                    // Restore hidden position
+                    root.style.position = 'absolute';
+                    root.style.left = '-9999px';
+                    root.style.zIndex = '-1';
+                    root.style.opacity = '1';
                 } catch (e) {
                     console.error('PDF export failed:', e);
                 } finally {
@@ -1121,19 +1219,20 @@
                     )}
 
                     {result && (
-                        <div className="pdf-source">
-                            <div className="pdf-content" ref={pdfRef}>
-                                <div className="pdf-header">
-                                    <h1>Commodities Research Intelligence Report</h1>
-                                    <div className="pdf-meta">
-                                        Generated: {new Date(result.metadata.generated_at).toLocaleString()} |
-                                        Articles Analyzed: {result.metadata.num_articles_found} |
-                                        Commodities: {result.metadata.commodities_analyzed?.join(', ')}
-                                    </div>
-                                    <div className="pdf-meta" style={{marginTop:'4px'}}>
-                                        Query: <em>{result.metadata.query}</em>
-                                    </div>
+                        <div id="pdf-render-root">
+                            <div className="pdf-page" ref={pdfRef}>
+                                <div className="pdf-banner">
+                                    <h1>Commodities Research Intelligence</h1>
+                                    <p className="pdf-subtitle">AI-Powered Market Analysis Report</p>
                                 </div>
+
+                                <div className="pdf-info-bar">
+                                    <span><strong>Date:</strong> {new Date(result.metadata.generated_at).toLocaleDateString()}</span>
+                                    <span><strong>Articles:</strong> {result.metadata.num_articles_found}</span>
+                                    <span><strong>Commodities:</strong> {result.metadata.commodities_analyzed?.join(', ')}</span>
+                                </div>
+
+                                <p><strong>Query:</strong> <em>{result.metadata.query}</em></p>
 
                                 <div dangerouslySetInnerHTML={{ __html: formatMarkdown(result.research_paper) }} />
 
@@ -1156,9 +1255,9 @@
                                                     <tr key={i}>
                                                         <td><strong>{s.commodity}</strong></td>
                                                         <td>{s.disruption_type}</td>
-                                                        <td>{s.impact_level}</td>
+                                                        <td><span className={`impact-${s.impact_level.toLowerCase()}`}>{s.impact_level}</span></td>
                                                         <td>{s.affected_route}</td>
-                                                        <td style={{color: s.price_change_pct >= 0 ? '#16a34a' : '#dc2626'}}>
+                                                        <td className={s.price_change_pct >= 0 ? 'price-up' : 'price-down'}>
                                                             {s.price_change_pct >= 0 ? '+' : ''}{s.price_change_pct.toFixed(1)}%
                                                         </td>
                                                         <td>{s.volume_disrupted_pct.toFixed(1)}%</td>
@@ -1177,10 +1276,10 @@
                                             <div className="pdf-price-grid">
                                                 {priceCards.map(({commodity, price, change}) => (
                                                     <div key={commodity} className="pdf-price-card">
-                                                        <div className="commod">{commodity}</div>
-                                                        <div className="price">${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                                                        <div className={change >= 0 ? 'change-pos' : 'change-neg'}>
-                                                            {change >= 0 ? '+' : ''}{change.toFixed(2)}%
+                                                        <div className="commod-name">{commodity}</div>
+                                                        <div className="commod-price">${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                                        <div className={change >= 0 ? 'commod-change-pos' : 'commod-change-neg'}>
+                                                            {change >= 0 ? '+' : ''}{change.toFixed(2)}% (10d)
                                                         </div>
                                                     </div>
                                                 ))}
@@ -1190,7 +1289,11 @@
                                 })()}
 
                                 <div className="pdf-footer">
-                                    Commodities Research Intelligence | Powered by Databricks | {new Date().toLocaleDateString()} | For Institutional Use Only
+                                    Commodities Research Intelligence &nbsp;|&nbsp; Powered by Databricks &nbsp;|&nbsp; {new Date().toLocaleDateString()} &nbsp;|&nbsp; For Institutional Use Only
+                                </div>
+                                <div className="pdf-disclaimer">
+                                    This report is based on publicly available information and proprietary analysis. Past performance does not guarantee future results.
+                                    Commodity investments carry significant risks including price volatility, regulatory changes, and geopolitical factors.
                                 </div>
                             </div>
                         </div>
