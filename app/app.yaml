@@ -7,32 +7,11 @@ command:
   - 8000
 
 env:
-  - name: DATABRICKS_WAREHOUSE_ID
-    value: "3f5fda9e5ef763b6"
-  - name: VS_ENDPOINT_NAME
-    value: "commodities_vs_endpoint"
-  - name: VS_INDEX_NAME
-    value: "commodities_research_catalog.news_research.news_articles_index"
-  - name: CATALOG
-    value: "commodities_research_catalog"
-  - name: SCHEMA
-    value: "news_research"
-  - name: LLM_ENDPOINT
-    value: "databricks-claude-sonnet-4"
+  - name: SUPERVISOR_ENDPOINT
+    value: "mas-5d3d2f6b-endpoint"
 
 resources:
-  - name: sql-warehouse
-    sql_warehouse:
-      permission: CAN_USE
-  - name: serving-endpoint
+  - name: supervisor-endpoint
     serving_endpoint:
-      name: databricks-claude-sonnet-4
+      name: "mas-5d3d2f6b-endpoint"
       permission: CAN_QUERY
-  - name: serving-endpoint-embeddings
-    serving_endpoint:
-      name: databricks-gte-large-en
-      permission: CAN_QUERY
-  - name: vector-search-endpoint
-    vector_search_endpoint:
-      name: commodities_vs_endpoint
-      permission: CAN_USE

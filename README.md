@@ -1,34 +1,47 @@
 # Commodities Research Intelligence
 
-AI-powered commodities research platform that takes breaking news input, retrieves relevant market intelligence from a curated news corpus, and generates institutional-grade research papers analyzing commodity price impacts, supply chain disruptions, and market dynamics.
+AI-powered commodities research platform using a **Multi-Agent Supervisor** architecture. Takes breaking news input, orchestrates specialized agents to retrieve market intelligence via Vector Search and Genie Space, and generates institutional-grade research papers.
 
 ![Architecture](architecture.png)
 
 ## Overview
 
-This application combines **Databricks Vector Search**, **Unity Catalog**, and **Foundation Model APIs** to deliver an end-to-end research workflow:
+This application uses the **OpenAI Agents SDK** with **Databricks MCP servers** to orchestrate a multi-agent research pipeline:
 
 1. A user enters a breaking news event (e.g., "Iran announces closure of Strait of Hormuz")
-2. The system semantically searches 142+ commodities news articles from 5 major sources
-3. Related supply chain impact data and commodity price history are retrieved
-4. Claude Sonnet generates a comprehensive research paper with quantitative analysis
-5. Results are presented across 4 interactive tabs with PDF export capability
-
-**Two access modes:**
-- **Interactive** — Databricks App with React UI for ad-hoc research
-- **Programmatic** — Model Serving endpoint (`commodities-research-api`) for automation via REST API
+2. The **Supervisor Agent** delegates to specialized sub-agents
+3. The **News Search Agent** semantically searches 142+ commodities news articles via Vector Search MCP
+4. The **Data Analyst Agent** queries supply chain impacts and commodity prices via Genie Space MCP
+5. The Supervisor synthesizes all data into a comprehensive research paper
+6. Results are presented across 4 interactive tabs with PDF export capability
 
 ## Architecture
 
+### Multi-Agent Supervisor
+
+The core of the application is a 3-agent system built with the OpenAI Agents SDK:
+
+| Agent | Tool | Purpose |
+|-------|------|---------|
+| **Supervisor** | Handoffs + LLM | Orchestrates the pipeline, delegates to sub-agents, generates the research paper |
+| **News Search Agent** | Vector Search MCP | Semantically searches the news corpus for related articles |
+| **Data Analyst Agent** | Genie Space MCP | Queries supply chain impacts and commodity prices using natural language |
+
+The Supervisor follows a sequential pipeline:
+1. Hand off to News Search Agent → get related articles
+2. Hand off to Data Analyst Agent → get supply chain + price data
+3. Synthesize everything into a structured research paper with quantitative analysis
+
 ### Data Pipeline (One-Time Setup)
 
-Three Databricks notebooks run sequentially on serverless compute to build the data layer:
+Four Databricks notebooks run sequentially on serverless compute:
 
-| Notebook | Purpose | Output Table |
-|----------|---------|-------------|
+| Notebook | Purpose | Output |
+|----------|---------|--------|
 | `01_generate_news_data.py` | Generates ~142 synthetic news articles from Bloomberg, Reuters, S&P Global, CNBC, and Financial Times across 7 themes | `news_articles` |
 | `02_generate_supply_chain_data.py` | Creates supply chain impact records and daily commodity price history (Mar 1 - Apr 8, 2026) | `supply_chain_impacts`, `commodity_prices` |
 | `03_setup_vector_search.py` | Prepares embedding text, provisions Vector Search endpoint, creates Delta Sync index | `news_articles_vs` + VS Index |
+| `05_setup_genie_space.py` | Creates a Genie Space with supply chain + price tables for natural language querying | Genie Space |
 
 **News themes covered:**
 - Strait of Hormuz / Iran crisis
@@ -41,15 +54,6 @@ Three Databricks notebooks run sequentially on serverless compute to build the d
 
 **Commodities tracked (25):** Crude Oil, Brent, WTI, Natural Gas, LNG, Gold, Silver, Copper, Aluminum, Platinum, Wheat, Corn, Soybeans, Rice, Sugar, Iron Ore, Lithium, Nickel, Zinc, Palladium, Urea, Methanol, Sulfur, Helium, Cobalt
 
-### Application Runtime Flow
-
-Both the Databricks App and the Serving Endpoint share the same pipeline:
-
-1. **Vector Search** — Semantically find the top 10 related articles using `databricks-gte-large-en` embeddings
-2. **SQL Queries** — Retrieve supply chain impact data and commodity price history from Delta tables via Serverless SQL
-3. **LLM Generation** — Send all context to `databricks-claude-sonnet-4` to produce a structured research paper
-4. **Response** — Return the research paper, source articles, supply chain impacts, and price data
-
 ### Infrastructure
 
 | Component | Resource |
@@ -58,11 +62,11 @@ Both the Databricks App and the Serving Endpoint share the same pipeline:
 | **Catalog** | `commodities_research_catalog.news_research` |
 | **Vector Search Endpoint** | `commodities_vs_endpoint` (STANDARD) |
 | **Vector Search Index** | `news_articles_index` (Delta Sync, `databricks-gte-large-en`) |
+| **Genie Space** | Configured with `supply_chain_impacts` + `commodity_prices` |
 | **LLM** | `databricks-claude-sonnet-4` (Foundation Model API) |
 | **Embeddings** | `databricks-gte-large-en` |
-| **SQL Warehouse** | Serverless Starter Warehouse |
 | **App Compute** | Databricks Apps (Medium) |
-| **Serving Endpoint** | `commodities-research-api` (MLflow pyfunc, scale-to-zero) |
+| **Serving Endpoint** | `commodities-research-api` (MLflow pyfunc, scale-to-zero) — optional |
 
 ## Project Structure
 
@@ -74,11 +78,14 @@ ResearchNews/
 │   ├── 01_generate_news_data.py          # News article generation
 │   ├── 02_generate_supply_chain_data.py  # Supply chain + price data
 │   ├── 03_setup_vector_search.py         # Vector search setup
-│   └── 04_deploy_serving_endpoint.py     # MLflow model + serving endpoint
+│   ├── 04_deploy_serving_endpoint.py     # MLflow model + serving endpoint
+│   └── 05_setup_genie_space.py           # Genie Space setup
 └── app/
     ├── app.yaml                  # Databricks App configuration
     ├── requirements.txt          # Python dependencies
-    ├── main.py                   # FastAPI backend
+    ├── main.py                   # FastAPI backend (API + routing)
+    ├── research_agents.py        # Multi-agent supervisor definitions
+    ├── agent_parser.py           # Agent output → structured response parser
     └── static/
         └── index.html            # React frontend (single-file)
 ```
@@ -128,70 +135,14 @@ ResearchNews/
 
 ## App Features
 
-- **Semantic search** — Vector search finds the most relevant articles regardless of keyword overlap
+- **Multi-agent orchestration** — Supervisor agent coordinates specialized agents for search, data analysis, and research generation
+- **Semantic search** — News Search Agent uses Vector Search MCP to find relevant articles regardless of keyword overlap
+- **Natural language data queries** — Data Analyst Agent uses Genie Space for dynamic SQL generation instead of hardcoded queries
 - **Multi-source analysis** — Cross-references news from 5 major outlets
 - **Supply chain mapping** — Links disruptions to specific trade routes, facilities, and downstream industries
 - **AI research generation** — Claude Sonnet produces structured research papers with executive summary, price analysis, risk scenarios, and recommendations
 - **Interactive UI** — 4 tabs for research paper, source articles, supply chain data, and price cards
 - **PDF export** — Download the full report as a professionally formatted PDF with appendices
-
-## API Usage (Serving Endpoint)
-
-The `commodities-research-api` serving endpoint exposes the same research pipeline as the app for programmatic access.
-
-### Python SDK
-```python
-from databricks.sdk import WorkspaceClient
-import json
-
-w = WorkspaceClient()
-response = w.serving_endpoints.query(
-    name="commodities-research-api",
-    dataframe_split={
-        "columns": ["breaking_news"],
-        "data": [["OPEC+ announces surprise production cut of 2 million barrels per day"]]
-    }
-)
-result = json.loads(response.predictions[0])
-print(result["research_paper"])
-```
-
-### curl
-```bash
-curl -X POST "https://<workspace>/serving-endpoints/commodities-research-api/invocations" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"dataframe_split": {"columns": ["breaking_news"], "data": [["Iran closes Strait of Hormuz"]]}}'
-```
-
-### Batch (multiple queries)
-```python
-response = w.serving_endpoints.query(
-    name="commodities-research-api",
-    dataframe_split={
-        "columns": ["breaking_news"],
-        "data": [
-            ["Iran closes Strait of Hormuz"],
-            ["Major copper mine collapse in Chile"],
-            ["China bans rare earth exports"]
-        ]
-    }
-)
-for pred in response.predictions:
-    result = json.loads(pred)
-    print(result["metadata"]["query"], "->", result["metadata"]["num_articles_found"], "articles")
-```
-
-### Response Schema
-```json
-{
-  "research_paper": "# Commodities Research Report: ...",
-  "related_articles": [{"headline": "...", "source": "Bloomberg", ...}],
-  "supply_chain_impacts": [{"commodity": "Crude Oil", "impact_level": "Critical", ...}],
-  "price_data": [{"commodity": "Crude Oil", "close_price": 95.42, ...}],
-  "metadata": {"query": "...", "num_articles_found": 10, "commodities_analyzed": [...]}
-}
-```
 
 ## Deployment
 
@@ -209,28 +160,31 @@ for pred in response.predictions:
    01_generate_news_data.py
    02_generate_supply_chain_data.py
    03_setup_vector_search.py
+   05_setup_genie_space.py
    ```
 
-3. **Create the app**:
+3. **Update app config** — Copy the Genie Space ID from notebook 05 output into `app/app.yaml` (replace `<REPLACE_WITH_GENIE_SPACE_ID>` in both the env and resources sections)
+
+4. **Create the app**:
    ```bash
    databricks apps create commodities-research --profile=<profile>
    ```
 
-4. **Grant permissions** to the app's service principal:
+5. **Grant permissions** to the app's service principal:
    ```sql
    GRANT USE_CATALOG, USE_SCHEMA, SELECT
    ON CATALOG commodities_research_catalog
    TO `<service-principal-client-id>`
    ```
 
-5. **Deploy the app**:
+6. **Deploy the app**:
    ```bash
    databricks apps deploy commodities-research \
      --source-code-path /Workspace/Users/<user>/commodities-research-app \
      --profile=<profile>
    ```
 
-6. **(Optional) Deploy serving endpoint** — Run notebook `04_deploy_serving_endpoint.py` to register the MLflow model and create the `commodities-research-api` endpoint for programmatic access.
+7. **(Optional) Deploy serving endpoint** — Run notebook `04_deploy_serving_endpoint.py` to register the MLflow model and create the `commodities-research-api` endpoint for programmatic access.
 
 ## Technology Stack
 
@@ -238,8 +192,10 @@ for pred in response.predictions:
 |-------|-----------|
 | Frontend | React 18, Babel (in-browser), html2pdf.js |
 | Backend | FastAPI, Uvicorn |
+| Agent Framework | OpenAI Agents SDK, Databricks MCP Servers |
 | AI/ML | Claude Sonnet 4 (LLM), GTE-Large-EN (Embeddings) |
 | Search | Databricks Vector Search (Delta Sync) |
+| Data Queries | Databricks Genie Space (natural language SQL) |
 | Data | Delta Lake, Unity Catalog |
 | Model Serving | MLflow pyfunc, Databricks Model Serving (scale-to-zero) |
 | Compute | Databricks Apps, Serverless SQL, Serverless Jobs |
