@@ -1,40 +1,37 @@
 # Commodities Research Intelligence
 
-AI-powered commodities research platform using a **Multi-Agent Supervisor** architecture. Takes breaking news input, orchestrates specialized agents to retrieve market intelligence via Vector Search and Genie Space, and generates institutional-grade research papers.
+AI-powered commodities research platform using a **Databricks Agent Bricks Supervisor** architecture. Takes breaking news input, orchestrates specialized agents to retrieve market intelligence via Vector Search and Genie Space, and generates institutional-grade research papers.
 
 ![Architecture](architecture.png)
 
 ## Overview
 
-This application uses the **OpenAI Agents SDK** with **Databricks MCP servers** to orchestrate a multi-agent research pipeline:
+This application uses **Databricks Agent Bricks** to orchestrate a multi-agent research pipeline:
 
 1. A user enters a breaking news event (e.g., "Iran announces closure of Strait of Hormuz")
-2. The **Supervisor Agent** delegates to specialized sub-agents
-3. The **News Search Agent** semantically searches 142+ commodities news articles via Vector Search MCP
-4. The **Data Analyst Agent** queries supply chain impacts and commodity prices via Genie Space MCP
+2. The **Agent Bricks Supervisor** delegates to specialized sub-agents
+3. The **News Search Agent** semantically searches 142+ commodities news articles via Vector Search
+4. The **Data Analyst Agent** queries supply chain impacts and commodity prices via Genie Space
 5. The Supervisor synthesizes all data into a comprehensive research paper
-6. Results are presented across 4 interactive tabs with PDF export capability
+6. The research paper is displayed with real-time thinking steps and PDF export
 
 ## Architecture
 
-### Multi-Agent Supervisor
+### Agent Bricks Supervisor
 
-The core of the application is a 3-agent system built with the OpenAI Agents SDK:
+The Supervisor Agent is created and managed via the **Databricks UI** (Build tab) and deployed as a managed serving endpoint. The FastAPI app calls this endpoint and streams the agent's thinking process to the frontend.
 
-| Agent | Tool | Purpose |
-|-------|------|---------|
-| **Supervisor** | Handoffs + LLM | Orchestrates the pipeline, delegates to sub-agents, generates the research paper |
-| **News Search Agent** | Vector Search MCP | Semantically searches the news corpus for related articles |
-| **Data Analyst Agent** | Genie Space MCP | Queries supply chain impacts and commodity prices using natural language |
+| Component | Description |
+|-----------|-------------|
+| **Supervisor Agent** | Managed by Agent Bricks. Orchestrates sub-agents and generates the research paper. |
+| **News Search Agent** | Vector Search sub-agent. Semantically searches the news corpus for related articles. |
+| **Data Analyst Agent** | Genie Space sub-agent. Queries supply chain impacts and commodity prices using natural language. |
 
-The Supervisor follows a sequential pipeline:
-1. Hand off to News Search Agent → get related articles
-2. Hand off to Data Analyst Agent → get supply chain + price data
-3. Synthesize everything into a structured research paper with quantitative analysis
+The app uses an async submit/poll pattern to avoid proxy timeouts, with file-based job storage for cross-instance compatibility.
 
 ### Data Pipeline (One-Time Setup)
 
-Four Databricks notebooks run sequentially on serverless compute:
+Databricks notebooks run sequentially on serverless compute:
 
 | Notebook | Purpose | Output |
 |----------|---------|--------|
@@ -42,15 +39,7 @@ Four Databricks notebooks run sequentially on serverless compute:
 | `02_generate_supply_chain_data.py` | Creates supply chain impact records and daily commodity price history (Mar 1 - Apr 8, 2026) | `supply_chain_impacts`, `commodity_prices` |
 | `03_setup_vector_search.py` | Prepares embedding text, provisions Vector Search endpoint, creates Delta Sync index | `news_articles_vs` + VS Index |
 | `05_setup_genie_space.py` | Creates a Genie Space with supply chain + price tables for natural language querying | Genie Space |
-
-**News themes covered:**
-- Strait of Hormuz / Iran crisis
-- Oil price volatility (Brent/WTI)
-- Industrial metals (copper at record LME highs)
-- European natural gas surge
-- Fertilizer supply disruption
-- Helium shortage impacting chipmaking
-- Agriculture and wheat markets
+| `06_setup_supervisor_agent.py` | Documents Supervisor Agent UI setup and tests the serving endpoint | Supervisor endpoint |
 
 **Commodities tracked (25):** Crude Oil, Brent, WTI, Natural Gas, LNG, Gold, Silver, Copper, Aluminum, Platinum, Wheat, Corn, Soybeans, Rice, Sugar, Iron Ore, Lithium, Nickel, Zinc, Palladium, Urea, Methanol, Sulfur, Helium, Cobalt
 
@@ -63,10 +52,9 @@ Four Databricks notebooks run sequentially on serverless compute:
 | **Vector Search Endpoint** | `commodities_vs_endpoint` (STANDARD) |
 | **Vector Search Index** | `news_articles_index` (Delta Sync, `databricks-gte-large-en`) |
 | **Genie Space** | Configured with `supply_chain_impacts` + `commodity_prices` |
-| **LLM** | `databricks-claude-sonnet-4` (Foundation Model API) |
+| **Supervisor Agent** | Agent Bricks managed serving endpoint |
 | **Embeddings** | `databricks-gte-large-en` |
 | **App Compute** | Databricks Apps (Medium) |
-| **Serving Endpoint** | `commodities-research-api` (MLflow pyfunc, scale-to-zero) — optional |
 
 ## Project Structure
 
@@ -78,14 +66,14 @@ ResearchNews/
 │   ├── 01_generate_news_data.py          # News article generation
 │   ├── 02_generate_supply_chain_data.py  # Supply chain + price data
 │   ├── 03_setup_vector_search.py         # Vector search setup
-│   ├── 04_deploy_serving_endpoint.py     # MLflow model + serving endpoint
-│   └── 05_setup_genie_space.py           # Genie Space setup
+│   ├── 04_deploy_serving_endpoint.py     # MLflow model + serving endpoint (optional)
+│   ├── 05_setup_genie_space.py           # Genie Space setup
+│   └── 06_setup_supervisor_agent.py      # Supervisor Agent setup docs + test
 └── app/
     ├── app.yaml                  # Databricks App configuration
     ├── requirements.txt          # Python dependencies
-    ├── main.py                   # FastAPI backend (API + routing)
-    ├── research_agents.py        # Multi-agent supervisor definitions
-    ├── agent_parser.py           # Agent output → structured response parser
+    ├── main.py                   # FastAPI backend (submit/poll + Supervisor call)
+    ├── agent_parser.py           # Supervisor text output → structured response parser
     └── static/
         └── index.html            # React frontend (single-file)
 ```
@@ -135,14 +123,14 @@ ResearchNews/
 
 ## App Features
 
-- **Multi-agent orchestration** — Supervisor agent coordinates specialized agents for search, data analysis, and research generation
-- **Semantic search** — News Search Agent uses Vector Search MCP to find relevant articles regardless of keyword overlap
-- **Natural language data queries** — Data Analyst Agent uses Genie Space for dynamic SQL generation instead of hardcoded queries
+- **Agent Bricks orchestration** — Managed Supervisor Agent coordinates Vector Search and Genie Space sub-agents
+- **Real-time thinking steps** — Frontend streams the agent's reasoning process as it works
+- **Semantic search** — Vector Search finds relevant articles regardless of keyword overlap
+- **Natural language data queries** — Genie Space generates SQL dynamically instead of hardcoded queries
 - **Multi-source analysis** — Cross-references news from 5 major outlets
-- **Supply chain mapping** — Links disruptions to specific trade routes, facilities, and downstream industries
-- **AI research generation** — Claude Sonnet produces structured research papers with executive summary, price analysis, risk scenarios, and recommendations
-- **Interactive UI** — 4 tabs for research paper, source articles, supply chain data, and price cards
-- **PDF export** — Download the full report as a professionally formatted PDF with appendices
+- **AI research generation** — Produces structured research papers with executive summary, price analysis, risk scenarios, and recommendations
+- **Markdown rendering** — Tables, blockquotes, lists, and formatting rendered cleanly
+- **PDF export** — Download the research paper as a formatted PDF
 
 ## Deployment
 
@@ -163,28 +151,30 @@ ResearchNews/
    05_setup_genie_space.py
    ```
 
-3. **Update app config** — Copy the Genie Space ID from notebook 05 output into `app/app.yaml` (replace `<REPLACE_WITH_GENIE_SPACE_ID>` in both the env and resources sections)
+3. **Create the Supervisor Agent** — Follow the steps in notebook `06_setup_supervisor_agent.py`:
+   - Navigate to Agents → Supervisor Agent → Build
+   - Add the Genie Space and Vector Search as sub-agents
+   - Note the serving endpoint name
 
-4. **Create the app**:
+4. **Update app config** — Set the Supervisor endpoint name in `app/app.yaml`
+
+5. **Create the app**:
    ```bash
    databricks apps create commodities-research --profile=<profile>
    ```
 
-5. **Grant permissions** to the app's service principal:
-   ```sql
-   GRANT USE_CATALOG, USE_SCHEMA, SELECT
-   ON CATALOG commodities_research_catalog
-   TO `<service-principal-client-id>`
-   ```
+6. **Grant permissions** to the app's service principal:
+   - `CAN_QUERY` on the Supervisor serving endpoint
+   - `CAN_QUERY` on any Knowledge Assistant endpoints used by the Supervisor
+   - `CAN_RUN` on the Genie Space (via Share in the UI)
+   - Unity Catalog: `USE_CATALOG`, `USE_SCHEMA`, `SELECT` on the catalog
 
-6. **Deploy the app**:
+7. **Deploy the app**:
    ```bash
    databricks apps deploy commodities-research \
      --source-code-path /Workspace/Users/<user>/commodities-research-app \
      --profile=<profile>
    ```
-
-7. **(Optional) Deploy serving endpoint** — Run notebook `04_deploy_serving_endpoint.py` to register the MLflow model and create the `commodities-research-api` endpoint for programmatic access.
 
 ## Technology Stack
 
@@ -192,11 +182,10 @@ ResearchNews/
 |-------|-----------|
 | Frontend | React 18, Babel (in-browser), html2pdf.js |
 | Backend | FastAPI, Uvicorn |
-| Agent Framework | OpenAI Agents SDK, Databricks MCP Servers |
-| AI/ML | Claude Sonnet 4 (LLM), GTE-Large-EN (Embeddings) |
+| Agent Orchestration | Databricks Agent Bricks (Supervisor Agent) |
+| AI/ML | Claude Sonnet (LLM), GTE-Large-EN (Embeddings) |
 | Search | Databricks Vector Search (Delta Sync) |
 | Data Queries | Databricks Genie Space (natural language SQL) |
 | Data | Delta Lake, Unity Catalog |
-| Model Serving | MLflow pyfunc, Databricks Model Serving (scale-to-zero) |
 | Compute | Databricks Apps, Serverless SQL, Serverless Jobs |
 | Infrastructure | Databricks FEVM (AWS) |
